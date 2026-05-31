@@ -52,6 +52,9 @@ assert_has_file $FL_DIR/exports/share/gnome-shell/search-providers/org.test.Hell
 assert_file_has_content $FL_DIR/exports/share/gnome-shell/search-providers/org.test.Hello.search-provider.ini "^DefaultDisabled=true$"
 assert_has_file $FL_DIR/exports/share/krunner/dbusplugins/org.test.Hello.desktop
 assert_file_has_content $FL_DIR/exports/share/krunner/dbusplugins/org.test.Hello.desktop "^X-KDE-PluginInfo-EnabledByDefault=false$"
+assert_has_file $FL_DIR/exports/share/thumbnailers/org.test.Hello.thumbnailer
+assert_file_has_content $FL_DIR/exports/share/thumbnailers/org.test.Hello.thumbnailer "^TryExec=.*flatpak$"
+assert_file_has_content $FL_DIR/exports/share/thumbnailers/org.test.Hello.thumbnailer "^Exec=.*flatpak run --branch=stable --arch=$ARCH --file-forwarding --command=hello\\.sh org\\.test\\.Hello @@ %i @@ @@ %o @@$"
 assert_has_file $FL_DIR/exports/share/icons/hicolor/64x64/apps/org.test.Hello.png
 assert_not_has_file $FL_DIR/exports/share/icons/hicolor/64x64/apps/dont-export.png
 assert_has_file $FL_DIR/exports/share/icons/HighContrast/64x64/apps/org.test.Hello.png

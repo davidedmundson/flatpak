@@ -128,6 +128,14 @@ X-Plasma-DBusRunner-Service=org.test.Hello.KRunner
 X-Plasma-DBusRunner-Path=/org/test/Hello/KRunner
 EOF
 
+mkdir -p ${DIR}/files/share/thumbnailers
+cat > ${DIR}/files/share/thumbnailers/${APP_ID}.thumbnailer <<EOF
+[Thumbnailer Entry]
+TryExec=hello.sh
+Exec=hello.sh %i %o
+MimeType=model/stl;model/x.stl-ascii;model/x.stl-binary;application/sla;
+EOF
+
 mkdir -p ${DIR}/files/share/icons/hicolor/64x64/apps
 cp $(dirname $0)/org.test.Hello.png ${DIR}/files/share/icons/hicolor/64x64/apps/${APP_ID}.png
 cp $(dirname $0)/org.test.Hello.png ${DIR}/files/share/icons/hicolor/64x64/apps/dont-export.png

@@ -237,6 +237,7 @@ collect_exports (GFile          *base,
     "share/dbus-1/services",              /* D-Bus service files */
     "share/gnome-shell/search-providers", /* Search providers */
     "share/krunner/dbusplugins",          /* KDE krunner DBus plugins */
+    "share/thumbnailers",                 /* Thumbnailer definitions */
     "share/appdata",                      /* Copy appdata/metainfo files (legacy path) */
     "share/metainfo",                     /* Copy appdata/metainfo files */
     "share/metainfo/releases",            /* Copy AppStream release files */

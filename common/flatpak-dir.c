@@ -8442,6 +8442,20 @@ format_flatpak_run_args_from_run_opts (GStrv flatpak_run_args)
 }
 
 static gboolean
+arg_needs_file_forwarding(const char *arg,
+                          gboolean is_thumbnailer)
+{
+  if (is_thumbnailer)
+    {
+      return (strcasecmp (arg, "%i") == 0) || (strcasecmp (arg, "%o") == 0);
+    }
+  else
+    {
+      return (strcasecmp (arg, "%f") == 0) || (strcasecmp (arg, "%u") == 0);
+    }
+}
+
+static gboolean
 export_desktop_file (const char         *app,
                      const char         *branch,
                      const char         *arch,
@@ -8466,6 +8480,7 @@ export_desktop_file (const char         *app,
   g_autofree char *escaped_app = maybe_quote (app);
   g_autofree char *escaped_branch = maybe_quote (branch);
   g_autofree char *escaped_arch = maybe_quote (arch);
+  gboolean is_thumbnailer = g_str_has_suffix (name, ".thumbnailer");
   int i;
   const char *flatpak;
 
@@ -8594,7 +8609,6 @@ export_desktop_file (const char         *app,
       g_autofree char *flatpak_run_args = format_flatpak_run_args_from_run_opts (flatpak_run_opts);
 
       g_key_file_remove_key (keyfile, groups[i], "X-Flatpak-RunOptions", NULL);
-      g_key_file_remove_key (keyfile, groups[i], "TryExec", NULL);
 
       /* Remove this to make sure nothing tries to execute it outside the sandbox*/
       g_key_file_remove_key (keyfile, groups[i], "X-GNOME-Bugzilla-ExtraInfoScript", NULL);
@@ -8602,6 +8616,11 @@ export_desktop_file (const char         *app,
       new_exec = g_string_new ("");
       if ((flatpak = g_getenv ("FLATPAK_BINARY")) == NULL)
         flatpak = FLATPAK_BINDIR "/flatpak";
+
+      if (is_thumbnailer)
+        g_key_file_set_string (keyfile, groups[i], "TryExec", flatpak);
+      else
+        g_key_file_remove_key (keyfile, groups[i], "TryExec", NULL);
 
       g_string_append_printf (new_exec,
                               "%s run --branch=%s --arch=%s",
@@ -8622,8 +8641,7 @@ export_desktop_file (const char         *app,
 
           for (j = 1; j < old_argc; j++)
             {
-              if (strcasecmp (old_argv[j], "%f") == 0 ||
-                  strcasecmp (old_argv[j], "%u") == 0)
+              if (arg_needs_file_forwarding (old_argv[j], is_thumbnailer))
                 {
                   g_string_append (new_exec, " --file-forwarding");
                   break;
@@ -8637,10 +8655,8 @@ export_desktop_file (const char         *app,
             {
               g_autofree char *arg = maybe_quote (old_argv[j]);
 
-              if (strcasecmp (arg, "%f") == 0)
+              if (arg_needs_file_forwarding (arg, is_thumbnailer))
                 g_string_append_printf (new_exec, " @@ %s @@", arg);
-              else if (strcasecmp (arg, "%u") == 0)
-                g_string_append_printf (new_exec, " @@u %s @@", arg);
               else if (g_str_has_prefix (arg, "@@"))
                 {
                   flatpak_fail_error (error, FLATPAK_ERROR_EXPORT_FAILED,
@@ -8783,7 +8799,8 @@ rewrite_export_dir (const char         *app,
             }
 
           if (g_str_has_suffix (dent->d_name, ".desktop") ||
-              g_str_has_suffix (dent->d_name, ".service"))
+              g_str_has_suffix (dent->d_name, ".service") ||
+              g_str_has_suffix (dent->d_name, ".thumbnailer"))
             {
               if (!export_desktop_file (app, branch, arch, metadata, previous_ids,
                                         source_iter.fd, dent->d_name, &stbuf, &new_name, cancellable, error))
@@ -8995,6 +9012,7 @@ flatpak_export_dir (GFile        *source,
     "share/dbus-1/services",               "../../..",
     "share/gnome-shell/search-providers",  "../../..",
     "share/krunner/dbusplugins",           "../../..",
+    "share/thumbnailers",                  "../..",
     "share/mime/packages",                 "../../..",
     "share/metainfo",                      "../..",
     "share/metainfo/releases",             "../../..",
